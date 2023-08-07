@@ -1,0 +1,11 @@
+[Unit]
+Description="Backup script on boot, rtcwake at 11AM in two davs"
+
+[Service]
+Type=oneshot
+User=syncoid
+Group=syncoid
+WorkingDirectory=/home/syncoid
+ExecStart=/home/syncoid/backup.sh 13:00 2
+TimeoutStartSec=0
+

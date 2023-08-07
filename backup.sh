@@ -1,19 +1,24 @@
 #!/bin/bash
 
 echo "---------- rpool_data ---------" > backup_log.txt
-syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:rpool/data backup/rpool_data >> backup_log.txt
+echo "------- rpool_data ERROR ------" > backup_error.txt
+syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:rpool/data backup/rpool_data 1>> backup_log.txt 2>> backup_error.txt
 echo "---------- nc-disk ---------" >> backup_log.txt
-syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:nc-disk backup/nc-disk >> backup_log.txt
+echo "-==---- nc-disk ERROR ------" >> backup_error.txt
+syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:nc-disk backup/nc-disk >> backup_log.txt 2>> backup_error.txt
 echo "---------- shelf_disks ---------" >> backup_log.txt
-syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:shelf/disks backup/shelf_disks >> backup_log.txt
+echo "------- shelf_disks ERROR ------" >> backup_error.txt
+syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:shelf/disks backup/shelf_disks >> backup_log.txt 2>> backup_error.txt
 echo "---------- rpool_data ---------" >> backup_log.txt
-syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:shelf/data backup/shelf_data >> backup_log.txt
-#echo "---------- LOG -----------" >> backup_log.txt
+echo "------- rpool_data ERROR ------" >> backup_error.txt
+syncoid --sendoptions="w" --no-privilege-elevation --no-sync-snap --skip-parent -r --sshport 2425 syncoid@pve.home.arpa:shelf/data backup/shelf_data >> backup_log.txt 2>> backup_error.txt
+echo "---------- LOG -----------" >> backup_log.txt
 
-#cat /var/log/syslog | grep backup.sh >> backup_log.txt
+cat /var/log/syslog | grep backup.sh >> backup_log.txt
 
-#echo "---------- LOG -----------" >> backup_log.txt
-sudo sanoid >> backup_log.txt
+echo "---------- SANOID -----------" >> backup_log.txt
+echo "------- SANOID ERROR --------" >> backup_error.txt
+sudo sanoid 1>> backup_log.txt 2>> backup_error.txt
 
 #send contents of backup_log.txt per telegram
 python3 telegram_bot.py
@@ -52,4 +57,3 @@ echo "Shutdown..."
 
 # give rtcwake some time to make its stuff
 sleep 2
-

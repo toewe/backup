@@ -1,0 +1,8 @@
+[Unit]
+Description="Run backup script 5 minutes after boot"
+
+[Timer]
+OnBootSec=5min
+
+[Install]
+WantedBy=default.target

@@ -55,4 +55,3 @@ sleep 2
 # and a fresh console
 #clear
 #echo "Good morning!"
-
