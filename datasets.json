@@ -1,0 +1,49 @@
+{
+    "datasets":
+    [
+        {
+            "source": "rpool/data",
+            "destination": "rpool_data",
+            "known_datasets":
+            {
+                "rpool/data/basevol-1002-disk-0": "nc-template",
+                "rpool/data/subvol-102-disk-1": "docker",
+                "rpool/data/vm-100-disk-0": "vm_HA", 
+                "rpool/data/vm-100-disk-1": "vm_HA_data"
+            } 
+        },
+        {
+            "source": "nc-disk",
+            "destination": "nc-disk",
+            "known_datasets":
+            { 
+                "nc-disk/subvol-101-disk-0": "nc-old",
+                "nc-disk/subvol-103-disk-0": "nextcloud"
+            }
+        },
+        {
+            "source": "shelf/data",
+            "destination": "shelf_data",
+            "known_datasets":
+            {
+                "shelf/disks/dummy1": "shelf_dummy" 
+            }
+        },
+        {
+            "source": "shelf/disks",
+            "destination": "shelf_disks",
+            "known_datasets":
+            {
+                "shelf/data/archive": "shelf_archive", 
+                "shelf/data/audio": "shelf_audio",
+                "shelf/data/backups": "shelf_backups",
+                "shelf/data/images": "shelf_images",
+                "shelf/data/photo": "shelf_photo",
+                "shelf/data/photo/a7iii": "shelf_photo_a7iii",
+                "shelf/data/photo/a7s": "shelf_photo_a7s",
+                "shelf/data/photo/analog": "shelf_photo_analog",
+                "shelf/data/photo/phone_backup": "shelf_photo_phone_backup"
+            }
+        }
+    ]
+}
