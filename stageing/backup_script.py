@@ -4,6 +4,7 @@ import telegram_utils as tu
 import json
 import datetime
 import asyncio
+from time import sleep
 
 location: str = 'offsite'
 
@@ -17,11 +18,13 @@ source_host: str = 'pve.home.arpa'
 ssh_port: int = 2425
 sendoptions: str = 'w'
 destination_root_pool: str = 'backup'
+
+# DEPRECATED
 # list of datasets tuples of (source, destination)
-root_datasets: list[tuple[str, str]] = [('rpool/data', 'rpool_data'),
-                                        ('nc-disk', 'nc_disk'),
-                                        ('shelf/data', 'shelf_data'),
-                                        ('shelf/disks', 'shelf_disks')]
+# root_datasets: list[tuple[str, str]] = [('rpool/data', 'rpool_data'),
+#                                         ('nc-disk', 'nc_disk'),
+#                                         ('shelf/data', 'shelf_data'),
+#                                         ('shelf/disks', 'shelf_disks')]
 
 syncoid_logs: dict[str, tuple[str, str]] = {}
 
@@ -55,8 +58,6 @@ for source_root_dataset, destination_root_dataset in root_datasets:
                                     )
 
     syncoid_logs[destination_root_dataset] = (syncoid_process.stdout.decode(), syncoid_process.stderr.decode())
-
-
 
 
 #####################
@@ -136,9 +137,29 @@ for pool in pool_statuses:
 ############
 
 # init telegram bot
-telegram_bot = tu.telegram.Bot(tu.bot_token[location])
+telegram_bot = tu.telegram.Bot(tu.BOT_TOKEN[location])
 
-asyncio.run(tu.send_message(telegram_bot, syncoid_msg, chat_id=tu.CHAT_ID_BACKUP_GROUP))
+### syncoid message
+# check if message length is too long
+if len(syncoid_msg) < tu.MESSAGE_CHAR_LIMIT:
+    syncoid_messages: list[str] = [syncoid_msg]
+else:
+    syncoid_messages: list[str] = tu.split_message_at_char_limit(syncoid_msg)
+# send list of messages
+for message in syncoid_messages:
+    asyncio.run(tu.send_message(telegram_bot, message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
+    sleep(4)
+
+### pool message
+# check if message length is too long
+if len(syncoid_msg) < tu.MESSAGE_CHAR_LIMIT:
+    syncoid_messages: list[str] = [syncoid_msg]
+else:
+    syncoid_messages: list[str] = tu.split_message_at_char_limit(syncoid_msg)
+# send list of messages
+for message in syncoid_messages:
+    asyncio.run(tu.send_message(telegram_bot, message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
+    sleep(4)
 
 asyncio.run(tu.send_message(telegram_bot, pool_msg, chat_id=tu.CHAT_ID_BACKUP_GROUP))
 
