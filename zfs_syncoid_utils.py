@@ -67,6 +67,12 @@ def parse_scrub_state_and_date(status: str) -> tuple[str,  datetime.date] or tup
     elif 'scrub in progress' in scrub_line:
         scrub_state = 'running'
         scrub_line_divider: str = 'since '
+    elif 'resilvered' in scrub_line:
+        scrub_state = 'resilvered'
+    elif 'resilver in progress' in scrub_line:
+        scrub_state = 'resilver in progress'
+        scrub_line_divider: str = 'since '
+
 
     # if known state was detected get date and return, otherwise return None
     if scrub_state != 'invalid':

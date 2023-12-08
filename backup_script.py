@@ -19,6 +19,8 @@ ssh_port: int = 2425
 sendoptions: str = 'w'
 destination_root_pool: str = 'backup'
 
+datasets_share_link: str = 'https://nc.home.arpa/s/GiwSS48Ys2z8XX9/download/datasets.json'
+
 # DEPRECATED
 # list of datasets tuples of (source, destination)
 # root_datasets: list[tuple[str, str]] = [('rpool/data', 'rpool_data'),
@@ -26,7 +28,15 @@ destination_root_pool: str = 'backup'
 #                                         ('shelf/data', 'shelf_data'),
 #                                         ('shelf/disks', 'shelf_disks')]
 
-syncoid_logs: dict[str, tuple[str, str]] = {}
+#todo
+########################
+# UPDATE DATASETS.JSON #
+########################
+# curl_process = subprocess.run(['curl', '-k', datasets_share_link, '>>', 'datasets_update.json'], capture_output=True)
+# if curl_process.returncode != 0:
+#     datasets_updated = False
+# elif
+
 
 # load datasets to sync
 with open('datasets.json', 'r') as f:
@@ -41,6 +51,7 @@ for json_dataset in json_datasets['datasets']:
         known_datasets[known_dataset_path] = known_dataset_name
 
 
+syncoid_logs: dict[str, tuple[str, str]] = {}
 # iterating over datasets and invoking syncoid command
 for source_root_dataset, destination_root_dataset in root_datasets:
     syncoid_process = subprocess.run([syncoid_user,

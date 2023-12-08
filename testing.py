@@ -1,0 +1,4 @@
+status = '  pool: backup\n state: ONLINE\n  scan: resilvered 261G in 00:34:50 with 0 errors on Sat Apr 22 22:27:32 2023\nconfig:\n\n\tNAME                                         STATE     READ WRITE CKSUM\n\tbackup                                       ONLINE       0     0     0\n\t  mirror-0                                   ONLINE       0     0     0\n\t    scsi-1ATA_WDC_WD80EFBX-68AZZN0_VGJZRPSG  ONLINE       0     0     0\n\t    e385377c-acdc-4710-8108-c45e57b3771b     ONLINE       0     0     0\n\nerrors: No known data errors\n'
+import stageing.zfs_syncoid_utils as zsu
+
+scrub_state = zsu.parse_scrub_state_and_date(status)
