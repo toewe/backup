@@ -83,7 +83,7 @@ def parse_scrub_state_and_date(status: str) -> tuple[str,  datetime.date] or tup
     else:
         return (None, None)
 
-def parse_pool_status(status: str) -> dict or None:
+def parse_pool_status(status: str, scrub_age_limit: int = 34) -> dict or None:
  
     # return if argument is empty or not correct type
     if not status:
@@ -112,7 +112,7 @@ def parse_pool_status(status: str) -> dict or None:
     if scrub_date is not None:
         now = datetime.date.today()
         delta_days: int = (now - scrub_date).days
-        if delta_days > 34:
+        if delta_days > scrub_age_limit:
             status_dict['scrub_date'] = f'SCRUB DATE:\nLast scrub {delta_days} days old.\n'
 
 
