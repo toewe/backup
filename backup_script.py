@@ -1,3 +1,5 @@
+import os
+import shutil
 import subprocess
 import zfs_syncoid_utils as zsu
 import telegram_utils as tu
@@ -8,18 +10,37 @@ from time import sleep
 
 location: str = 'offsite'
 
+########################
+# Update datasets.json #
+########################
+
+datasets_json_updated: bool = False
+# nextcloud link to datasets
+datasets_share_link: str = 'https://nc.home.arpa/s/GiwSS48Ys2z8XX9/download/datasets.json'
+
+if os.path.exists('dataset.json'):
+    shutil.move('datasets.json', 'datasets_old.json')
+
+wget_process = subprocess.run(['wget', '--no-check-certificate', datasets_share_link])
+
+if not os.path.exists('dataset.json'):
+    shutil.copy2('datasets_old.json', 'datasets.json')
+else:
+    datasets_json_updated = True
+
+
 ####################
 # SYNCOID COMMANDS #
 ####################
 
 # variables for syncoid command
+syncoid_command: str = 'syncoid'
 syncoid_user: str = 'syncoid'
 source_host: str = 'pve.home.arpa'
 ssh_port: int = 2425
 sendoptions: str = 'w'
 destination_root_pool: str = 'backup'
 
-datasets_share_link: str = 'https://nc.home.arpa/s/GiwSS48Ys2z8XX9/download/datasets.json'
 
 # DEPRECATED
 # list of datasets tuples of (source, destination)
@@ -54,7 +75,7 @@ for json_dataset in json_datasets['datasets']:
 syncoid_logs: dict[str, tuple[str, str]] = {}
 # iterating over datasets and invoking syncoid command
 for source_root_dataset, destination_root_dataset in root_datasets:
-    syncoid_process = subprocess.run([syncoid_user,
+    syncoid_process = subprocess.run([syncoid_command,
                                       f'--sendoptions={sendoptions}',
                                       '--no-privilege-elevation',
                                       '--no-sync-snap',
@@ -119,9 +140,9 @@ if syncoid_msg_prefix:
 
 print(syncoid_msg)
 
-#####################
-# LOCAL POOL STATUS #
-#####################
+###############################
+# COLLECT LOCAL POOL STATUSES #
+###############################
 
 pool_names: str = zsu.get_pool_names()
 
@@ -129,19 +150,20 @@ pool_statuses: dict = {}
 for pool in pool_names:
     pool_statuses[pool] = (zsu.get_pool_used_space(pool), zsu.parse_pool_status(zsu.get_pool_status(pool)))
 
-##############################
-# CREATE POOL STATUS MESSAGE #
-##############################
+###############################
+# CREATE POOL STATUS MESSAGES #
+###############################
 
 pool_msg: str = f'{location.capitalize()} Pool Status:\n'
 
 for pool in pool_statuses:
-    pool_msg += f'{pool}: {pool_statuses[pool][0]} used\n'
+    pool_msg += f'{pool}:\n'
+    pool_msg += f'- {pool_statuses[pool][0]} used\n'
     if any(pool_statuses[pool][1].values()):
         for status_type in pool_statuses[pool][1]:
-            pool_msg += pool_statuses[pool][1][status_type]
+            pool_msg += f'- {pool_statuses[pool][1][status_type]}'
     else:
-        pool_msg += 'Status OK\n'
+        pool_msg += '- Status OK\n'
 
 ############
 # TELEGRAM #
@@ -156,6 +178,7 @@ if len(syncoid_msg) < tu.MESSAGE_CHAR_LIMIT:
     syncoid_messages: list[str] = [syncoid_msg]
 else:
     syncoid_messages: list[str] = tu.split_message_at_char_limit(syncoid_msg)
+
 # send list of messages
 for message in syncoid_messages:
     asyncio.run(tu.send_message(telegram_bot, message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
@@ -167,6 +190,7 @@ if len(syncoid_msg) < tu.MESSAGE_CHAR_LIMIT:
     syncoid_messages: list[str] = [syncoid_msg]
 else:
     syncoid_messages: list[str] = tu.split_message_at_char_limit(syncoid_msg)
+
 # send list of messages
 for message in syncoid_messages:
     asyncio.run(tu.send_message(telegram_bot, message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
@@ -178,15 +202,30 @@ asyncio.run(tu.send_message(telegram_bot, pool_msg, chat_id=tu.CHAT_ID_BACKUP_GR
 # SCRUB #
 #########
 
-# pool_names: str = zsu.get_pool_names()
+pool_names: str = zsu.get_pool_names()
 
-# pool_scrub_states: dict = {}
-# for pool in pool_names:
-#     pool_scrub_states[pool] = zsu.parse_scrub_state_and_date(zsu.get_pool_status(pool))
+pool_scrub_states: dict = {}
+for pool in pool_names:
+    pool_scrub_states[pool] = zsu.parse_scrub_state_and_date(zsu.get_pool_status(pool))
 
-# now = datetime.date.today()
-# for pool in pool_scrub_states:
-#     delta_days: int = (now - pool_scrub_states[pool][1]).days
-#     if delta_days > 34:
-#         if 'resilver' not in zsu.get_pool_status(pool):
-#             pass
+now = datetime.date.today()
+for pool in pool_scrub_states:
+    if pool_scrub_states[pool][1] == None:
+        continue
+    if 'in progress' in pool_scrub_states[pool][0]:
+        continue 
+    delta_days: int = (now - pool_scrub_states[pool][1]).days
+    if delta_days > 34:
+        
+        scrub_message: str = f'Starting SCRUB for {pool}.'
+        asyncio.run(tu.send_message(telegram_bot, scrub_message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
+        subprocess.run(['zpool', 'scrub','-w', pool])
+
+        pool_status = zsu.get_pool_status(pool)
+        scrub_message = f'Finished SCRUB for {pool}:\n'
+        if any(pool_statuses[pool][1].values()):
+            for status_type in pool_statuses[pool][1]:
+                scrub_message += f'- {pool_statuses[pool][1][status_type]}'
+        else:
+            scrub_message += '- Status OK\n'
+        asyncio.run(tu.send_message(telegram_bot, scrub_message, chat_id=tu.CHAT_ID_BACKUP_GROUP))
